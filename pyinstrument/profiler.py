@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 import os
 import timeit
@@ -11,19 +10,21 @@ timer = timeit.default_timer
 
 class NotMainThreadError(Exception):
     '''pyinstrument must be used on the main thread in signal mode'''
+
     def __init__(self, message=''):
-        super(NotMainThreadError, self).__init__(message or NotMainThreadError.__doc__)
+        super().__init__(message or NotMainThreadError.__doc__)
 
 
 class SignalUnavailableError(Exception):
     '''pyinstrument uses signal.SIGALRM in signal mode, which is not available on your system.
 
     You can pass the argument 'use_signal=False' to run in setprofile mode.'''
+
     def __init__(self, message=''):
-        super(SignalUnavailableError, self).__init__(message or SignalUnavailableError.__doc__)
+        super().__init__(message or SignalUnavailableError.__doc__)
 
 
-class Profiler(object):
+class Profiler:
     def __init__(self, use_signal=True):
         if use_signal:
             try:
@@ -185,10 +186,35 @@ class Profiler(object):
         return page
 
 
-class Frame(object):
+class ColorsEnabled:
+    red = '\033[31m'
+    green = '\033[32m'
+    yellow = '\033[33m'
+    blue = '\033[34m'
+    cyan = '\033[36m'
+    bright_green = '\033[92m'
+
+    bold = '\033[1m'
+    faint = '\033[2m'
+
+    end = '\033[0m'
+
+
+class ColorsDisabled:
+    def __getattr__(self, key):
+        return ''
+
+
+colors_disabled = ColorsDisabled()
+
+colors_enabled = ColorsEnabled()
+
+
+class Frame:
     """
     Object that represents a stack frame in the parsed tree
     """
+
     def __init__(self, identifier='', parent=None):
         self.identifier = identifier
         self.parent = parent
@@ -297,14 +323,14 @@ class Frame(object):
     def add_child(self, child):
         self.children_dict[child.identifier] = child
 
-    def as_text(self, indent=u'', child_indent=u'', unicode=False, color=False):
+    def as_text(self, indent='', child_indent='', unicode=False, color=False):
         colors = colors_enabled if color else colors_disabled
-        time_str = '{:.3f}'.format(self.time())
+        time_str = f'{self.time():.3f}'
 
         if color:
             time_str = self._ansi_color_for_time() + time_str + colors.end
 
-        result = u'{indent}{time_str} {function}  {c.faint}{code_position}{c.end}\n'.format(
+        result = '{indent}{time_str} {function}  {c.faint}{code_position}{c.end}\n'.format(
             indent=indent,
             time_str=time_str,
             function=self.function,
@@ -318,11 +344,11 @@ class Frame(object):
 
         for child in children:
             if child is not last_child:
-                c_indent = child_indent + (u'├─ ' if unicode else '|- ')
-                cc_indent = child_indent + (u'│  ' if unicode else '|  ')
+                c_indent = child_indent + '|- '
+                cc_indent = child_indent + '|  '
             else:
-                c_indent = child_indent + (u'└─ ' if unicode else '`- ')
-                cc_indent = child_indent + u'   '
+                c_indent = child_indent + '`- '
+                cc_indent = child_indent + '   '
             result += child.as_text(indent=c_indent,
                                     child_indent=cc_indent,
                                     unicode=unicode,
@@ -346,12 +372,12 @@ class Frame(object):
                 <span class="function">{function}</span>
                 <span class="code-position">{code_position}</span>
             </div>'''.format(
-                time=self.time(),
-                function=self.function,
-                code_position=self.code_position_short,
-                parent_proportion=self.proportion_of_parent,
-                total_proportion=self.proportion_of_total,
-                extra_class=extra_class)
+            time=self.time(),
+            function=self.function,
+            code_position=self.code_position_short,
+            parent_proportion=self.proportion_of_parent,
+            total_proportion=self.proportion_of_total,
+            extra_class=extra_class)
 
         result += '<div class="frame-children">'
 
@@ -376,26 +402,5 @@ class Frame(object):
         else:
             return colors.bright_green + colors.faint
 
-    def __repr__(self):
+    def __str__(self):
         return 'Frame(identifier=%s, time=%f, children=%r)' % (self.identifier, self.time(), self.children)
-
-
-class colors_enabled:
-    red = '\033[31m'
-    green = '\033[32m'
-    yellow = '\033[33m'
-    blue = '\033[34m'
-    cyan = '\033[36m'
-    bright_green = '\033[92m'
-
-    bold = '\033[1m'
-    faint = '\033[2m'
-
-    end = '\033[0m'
-
-
-class colors_disabled:
-    def __getattr__(self, key):
-        return ''
-
-colors_disabled = colors_disabled()

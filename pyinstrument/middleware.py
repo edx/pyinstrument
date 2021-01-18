@@ -15,7 +15,7 @@ not_main_thread_message = (
     "https://github.com/joerick/pyinstrument#signal-or-setprofile-mode")
 
 
-class ProfilerMiddleware(object):
+class ProfilerMiddleware:
     def process_request(self, request):
         profile_dir = getattr(settings, 'PYINSTRUMENT_PROFILE_DIR', None)
         use_signal = getattr(settings, 'PYINSTRUMENT_USE_SIGNAL', True)
@@ -27,7 +27,6 @@ class ProfilerMiddleware(object):
                 request.profiler = profiler
             except NotMainThreadError:
                 raise NotMainThreadError(not_main_thread_message)
-
 
     def process_response(self, request, response):
         if hasattr(request, 'profiler'):
