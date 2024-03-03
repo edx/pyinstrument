@@ -1,4 +1,7 @@
-from setuptools import setup, find_packages
+import os
+import re
+
+from setuptools import find_packages, setup
 
 setup(
     name="pyinstrument",
